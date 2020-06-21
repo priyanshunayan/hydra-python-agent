@@ -18,7 +18,7 @@ def expand_template(response, mappings):
     required_props = {}
     for prop in response['search']['hydra:mapping']:
         if prop['@type'] == 'hydra:IriTemplateMapping' and prop['hydra:required']:
-            required_props[prop['hydra:variable']]: True
+            required_props[prop['hydra:variable']] = True
 
     # check if any required_prop is missing from mappings and throw error if there are any
     for key in required_props:
