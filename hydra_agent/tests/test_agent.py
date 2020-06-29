@@ -6,6 +6,7 @@ from hydra_agent.redis_core.redis_proxy import RedisProxy
 from redisgraph import Graph
 from hydra_agent.tests.test_examples.hydra_doc_sample import doc as drone_doc
 from hydra_agent.helpers import expand_template
+from urllib.parse import urlparse
 
 
 class TestAgent(unittest.TestCase):
@@ -301,12 +302,15 @@ class TestAgent(unittest.TestCase):
             "limit": "10",
             "offset": "1"
         }
-
-        self.assertEqual(expand_template(simplified_response, sample_mapping_object),
-                         "/serverapi/DroneCollection/?name=Drone1&pageIndex=1&limit=10&offset=1")
+        iri_url = urlparse(expand_template(
+            simplified_response, sample_mapping_object))
+        iri_url_should_be = urlparse(
+            "/serverapi/DroneCollection/?name=Drone1&pageIndex=1&limit=10&offset=1")
+        self.assertEqual(sort(iri_url.query),
+                         sort(iri_url_should_be.query))
 
     def test_explicit_iri_templates(self):
-        """Tests the URI constructed on the basis of Basic Representation
+        """Tests the URI constructed on the basis of Explicit Representation
         """
         simplified_response = {
             "@context": "/serverapi/contexts/DroneCollection.jsonld",
@@ -371,13 +375,15 @@ class TestAgent(unittest.TestCase):
             },
             "str_prop": "A simple string"
         }
-        self.assertEqual(expand_template(simplified_response, sample_mapping_object),
-                         "/serverapi/DroneCollection/?url_demo=http%3A%2F%2Fwww.hydra-cg.com%2F&prop_with_language=%22A%20simple%20string%22%40en&prop_with_type=%225.5%22%5E%5Ehttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23decimal&str_prop=%22A%20simple%20string%22")
+        iri_url = urlparse(expand_template(
+            simplified_response, sample_mapping_object))
+        iri_url_should_be = urlparse(
+            "/serverapi/DroneCollection/?url_demo=http%3A%2F%2Fwww.hydra-cg.com%2F&prop_with_language=%22A%20simple%20string%22%40en&prop_with_type=%225.5%22%5E%5Ehttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23decimal&str_prop=%22A%20simple%20string%22")
+        self.assertEqual(sort(iri_url.query),
+                         sort(iri_url_should_be.query))
 
-        pass
-
-    @patch('hydra_agent.agent.Session.get')
-    @patch('hydra_agent.agent.Session.put')
+    @ patch('hydra_agent.agent.Session.get')
+    @ patch('hydra_agent.agent.Session.put')
     def test_edges(self, put_session_mock, embedded_get_mock):
         """Tests to check if all edges are being created properly
         :param put_session_mock: MagicMock object for patching session.put
