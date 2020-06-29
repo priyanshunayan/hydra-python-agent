@@ -41,7 +41,7 @@ def expand_template(response, mappings):
     # Hydra Supports two types of Representations: BasicRepresentation or ExplicitRepresentation.
     if response['search']['hydra:variableRepresentation'] == 'hydra:BasicRepresentation':
         # Expansion using Basic Representation
-        query_string = urlencode(mappings)
+        query_string = urlencode(mappings, quote_via=quote, safe='')
         # append to the end of url
         url = response['@id'] + '?' + query_string
         return url
@@ -57,20 +57,20 @@ def expand_template(response, mappings):
         * If a literal has a type, two caret symbols (^^) are appended after the double-quoted literal, followed by the full datatype IRI.
         """
         modified_mapping = {}
-        for prop, value in response.items():
+        for prop, value in mappings.items():
             # check if its an iri
-            if value['@id'] is not None:
+            if '@id' in value:
                 encoded_iri = quote(value['@id'], safe='')
                 modified_mapping[prop] = encoded_iri
                 continue
             # if language is provided
-            if value['@value'] is not None and value['@language'] is not None:
+            if '@value' in value and '@language' in value:
                 expand_value = '\"' + \
-                    value['@value'] + '\"' + '@' + value['@lanuage']
+                    value['@value'] + '\"' + '@' + value['@language']
                 modified_mapping[prop] = quote(expand_value, safe="")
                 continue
             # if it's a typed value
-            if value['@value'] is not None and value['@type'] is not None:
+            if '@value' in value and '@type' in value:
                 expand_value = '\"' + \
                     value['@value'] + '\"' + '^^' + value['@type']
                 modified_mapping[prop] = quote(expand_value, safe='')
@@ -81,6 +81,6 @@ def expand_template(response, mappings):
                 modified_mapping[prop] = quote(expand_value, safe='')
                 continue
 
-        query_string = urlencode(modified_mapping)
+        query_string = urlencode(modified_mapping, safe='%')
         url = response['@id'] + '?' + query_string
         return url

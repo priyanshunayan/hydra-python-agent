@@ -5,6 +5,7 @@ from hydra_agent.redis_core.graphutils_operations import GraphOperations
 from hydra_agent.redis_core.redis_proxy import RedisProxy
 from redisgraph import Graph
 from hydra_agent.tests.test_examples.hydra_doc_sample import doc as drone_doc
+from hydra_agent.helpers import expand_template
 
 
 class TestAgent(unittest.TestCase):
@@ -241,6 +242,140 @@ class TestAgent(unittest.TestCase):
         # Assert if nothing different was returned by Redis
         self.assertEqual(get_new_object, {"msg": "resource doesn't exist"})
 
+    def test_basic_iri_templates(self):
+        """Tests the URI constructed on the basis of Basic Representation
+        """
+        simplified_response = {
+            "@context": "/serverapi/contexts/DroneCollection.jsonld",
+            "@id": "/serverapi/DroneCollection/",
+            "@type": "DroneCollection",
+            "members": [
+                {
+                    "@id": "/serverapi/DroneCollection/1",
+                    "@type": "Drone"
+                },
+            ],
+            "search": {
+                "@type": "hydra:IriTemplate",
+                "hydra:mapping": [
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "http://schema.org/name",
+                        "hydra:required": False,
+                        "hydra:variable": "name"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "pageIndex",
+                        "hydra:required": False,
+                        "hydra:variable": "pageIndex"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "limit",
+                        "hydra:required": False,
+                        "hydra:variable": "limit"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "offset",
+                        "hydra:required": False,
+                        "hydra:variable": "offset"
+                    }
+                ],
+                "hydra:template": "/serverapi/(pageIndex, limit, offset)",
+                "hydra:variableRepresentation": "hydra:BasicRepresentation"
+            },
+
+            "view": {
+                "@id": "/serverapi/DroneCollection?page=1",
+                "@type": "PartialCollectionView",
+                "first": "/serverapi/DroneCollection?page=1",
+                "last": "/serverapi/DroneCollection?page=1",
+                "next": "/serverapi/DroneCollection?page=1"
+            }
+        }
+        sample_mapping_object = {
+            "name": "Drone1",
+            "pageIndex": "1",
+            "limit": "10",
+            "offset": "1"
+        }
+
+        self.assertEqual(expand_template(simplified_response, sample_mapping_object),
+                         "/serverapi/DroneCollection/?name=Drone1&pageIndex=1&limit=10&offset=1")
+
+    def test_explicit_iri_templates(self):
+        """Tests the URI constructed on the basis of Basic Representation
+        """
+        simplified_response = {
+            "@context": "/serverapi/contexts/DroneCollection.jsonld",
+            "@id": "/serverapi/DroneCollection/",
+            "@type": "DroneCollection",
+            "members": [
+                {
+                    "@id": "/serverapi/DroneCollection/1",
+                    "@type": "Drone"
+                },
+            ],
+            "search": {
+                "@type": "hydra:IriTemplate",
+                "hydra:mapping": [
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "http://schema.org/name",
+                        "hydra:required": False,
+                        "hydra:variable": "name"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "pageIndex",
+                        "hydra:required": False,
+                        "hydra:variable": "pageIndex"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "limit",
+                        "hydra:required": False,
+                        "hydra:variable": "limit"
+                    },
+                    {
+                        "@type": "hydra:IriTemplateMapping",
+                        "hydra:property": "offset",
+                        "hydra:required": False,
+                        "hydra:variable": "offset"
+                    }
+                ],
+                "hydra:template": "/serverapi/(pageIndex, limit, offset)",
+                "hydra:variableRepresentation": "hydra:ExplicitRepresentation"
+            },
+            "view": {
+                "@id": "/serverapi/DroneCollection?page=1",
+                "@type": "PartialCollectionView",
+                "first": "/serverapi/DroneCollection?page=1",
+                "last": "/serverapi/DroneCollection?page=1",
+                "next": "/serverapi/DroneCollection?page=1"
+            }
+        }
+        sample_mapping_object = {
+            "url_demo": {
+                "@id": "http://www.hydra-cg.com/"
+            },
+            "prop_with_language": {
+                "@language": "en",
+                "@value": "A simple string"
+            },
+            "prop_with_type": {
+                "@value": "5.5",
+                "@type": "http://www.w3.org/2001/XMLSchema#decimal"
+            },
+            "str_prop": "A simple string"
+        }
+        self.assertEqual(expand_template(simplified_response, sample_mapping_object),
+                         "/serverapi/DroneCollection/?url_demo=http%3A%2F%2Fwww.hydra-cg.com%2F&prop_with_language=%22A%20simple%20string%22%40en&prop_with_type=%225.5%22%5E%5Ehttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23decimal&str_prop=%22A%20simple%20string%22")
+
+        pass
+
     @patch('hydra_agent.agent.Session.get')
     @patch('hydra_agent.agent.Session.put')
     def test_edges(self, put_session_mock, embedded_get_mock):
@@ -287,6 +422,7 @@ class TestAgent(unittest.TestCase):
         query = "MATCH (p)-[r]->() WHERE p.type = 'Drone' RETURN type(r)"
         query_result = self.redis_graph.query(query)
         self.assertEqual(query_result.result_set[0][0], 'has_State')
+
 
 if __name__ == "__main__":
     unittest.main()

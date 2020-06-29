@@ -98,6 +98,7 @@ class Agent(Session, socketio.ClientNamespace, socketio.Client):
                 response = super().get(url)
             else:
                 response_body = super().get(url)
+                # filtes can be simple dict or a json-ld
                 templated_url = 'http://localhost:8080' + \
                     expand_template(response_body.json(), filters)
                 response = super().get(templated_url)
