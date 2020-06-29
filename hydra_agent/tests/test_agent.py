@@ -306,8 +306,8 @@ class TestAgent(unittest.TestCase):
             simplified_response, sample_mapping_object))
         iri_url_should_be = urlparse(
             "/serverapi/DroneCollection/?name=Drone1&pageIndex=1&limit=10&offset=1")
-        self.assertEqual((iri_url.query),
-                         (iri_url_should_be.query))
+        self.assertEqual(sorted(iri_url.query),
+                         sorted(iri_url_should_be.query))
 
     def test_explicit_iri_templates(self):
         """Tests the URI constructed on the basis of Explicit Representation
@@ -379,8 +379,8 @@ class TestAgent(unittest.TestCase):
             simplified_response, sample_mapping_object))
         iri_url_should_be = urlparse(
             "/serverapi/DroneCollection/?url_demo=http%3A%2F%2Fwww.hydra-cg.com%2F&prop_with_language=%22A%20simple%20string%22%40en&prop_with_type=%225.5%22%5E%5Ehttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23decimal&str_prop=%22A%20simple%20string%22")
-        self.assertEqual((iri_url.query),
-                         (iri_url_should_be.query))
+        self.assertEqual(sorted(iri_url.query),
+                         sorted(iri_url_should_be.query))
 
     @ patch('hydra_agent.agent.Session.get')
     @ patch('hydra_agent.agent.Session.put')
